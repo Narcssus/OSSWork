@@ -58,6 +58,7 @@ abstract public class WebSpider {
 				httpURLConnection.setRequestProperty("Accept-Charset", "utf-8");
 				httpURLConnection.setRequestProperty("Content-Type","application/x-www-form-urlencoded");
 				if (httpURLConnection.getResponseCode() >= 300) {
+					System.out.println("ERROR-"+httpURLConnection.getResponseCode());
 					finishedNum++;
 					theUrl = getNextUrl(baseurl , finishedNum);
 					continue;
@@ -70,6 +71,7 @@ abstract public class WebSpider {
 				System.out.println(finishedNum + "/" + sum);
 				finishedNum++;
 				theUrl = getNextUrl(baseurl , finishedNum);
+				
 			}
 		} finally {
 			if (reader != null) {

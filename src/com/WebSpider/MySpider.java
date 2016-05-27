@@ -15,22 +15,21 @@ public class MySpider {
 		s.start();
 		System.out.println("Success");
 	}
-	
+
 	public void MyApacheSpider() throws Exception {
 		ApacheSpider s = new ApacheSpider();
-		String[] urls = { "https://issues.apache.org/jira/si/jira.issueviews:issue-html/AMQ-6303/AMQ-6303" };
-		String beginWords="formtitle";
-		String endWords="Remaining Estimate";
-		s.setWords(beginWords,endWords);
+		String[] urls = { "https://issues.apache.org/jira/si/jira.issueviews:issue-html/ZOOKEEPER-2433/ZOOKEEPER-2433" };
+		String beginWords = "formtitle";
+		String endWords = "Remaining Estimate";
+		s.setWords(beginWords, endWords);
 		s.setUrls(urls);
-		s.setBeginNum(6303);
+		s.setBeginNum(1001);
 		s.start();
 		System.out.println("Success");
 	}
-	
-	
+
 	public static void main(String[] args) throws Exception {
-		MySpider m=new MySpider();
+		MySpider m = new MySpider();
 		m.MyApacheSpider();
 	}
 }
@@ -47,13 +46,13 @@ class ApacheSpider extends WebSpider {
 			map.clear();
 			url = urls[i];
 			String[] tmp = url.split("/");
-			String numtmp=tmp[tmp.length - 1].split("-")[1];
+			String numtmp = tmp[tmp.length - 1].split("-")[1];
 			int sum = Integer.parseInt(numtmp);
-			url = url.replaceAll(numtmp, beginwith+"");
+			url = url.replaceAll(numtmp, beginwith + "");
 			String fileName = tmp[tmp.length - 1].split("-")[0] + ".xls";
-			
-			//System.out.println(fileName);
-			//System.out.println(sum);
+			fileName = "D:\\desktop\\" + fileName;
+			// System.out.println(fileName);
+			// System.out.println(sum);
 			contents = MySpider(url, sum);
 			e.writeNewExcel(fileName, contents);
 		}
@@ -61,39 +60,58 @@ class ApacheSpider extends WebSpider {
 
 	@Override
 	public String getLine(String s, int num) {
-		s=s.replaceAll("<[^>]*>", "");
-		s=s.replaceAll("	", "");
-		String[] lines=s.split("\n|&nbsp;");
+		s = s.replaceAll("<[^>]*>", "");
+		s = s.replaceAll(" {2,}", "");
+		s = s.replaceAll("&nbsp;", "\n");
+		s = s.replaceAll("&#39;", "");
+		String[] lines = s.split("\n");
+
 		ArrayList<String> usefulLine = new ArrayList<String>();
-		String line="";
-		boolean mark=false;
-		for(int i=0;i<lines.length;i++){
-			if(lines[i].contains("Created")) mark=true;
-			if(lines[i].contains("Estimate")) mark=false;
-			
-			if(mark&&lines[i].length()>0){
+		String line = "";
+		boolean mark = false;
+		for (int i = 0; i < lines.length; i++) {
+			lines[i] = lines[i].replaceAll("	", "");
+			if (lines[i].contains("Created"))
+				mark = true;
+			if (lines[i].contains("Estimate"))
+				mark = false;
+			if (mark && lines[i].length() > 0) {
 				usefulLine.add(lines[i]);
 			}
 		}
-		if(line.length()<1){
-			line+="number#Created#Updated#Resolved#Status#Project#Components#Affects Versions#Fix Versions#Type#Priority#Reporter#Assignee#Resolution#Votes#Labels\n";
+		if (num == beginwith && line.length() < 1) {
+			line += "number#Created#Updated#Resolved#Status#Project#Components#Affects Versions#Fix Versions#Type#Priority#Reporter#Assignee#Resolution#Votes#Labels\n";
 		}
-		
-		
-		
-		for(int i=0;i<usefulLine.size();i++){
-			System.out.println(i+": "+usefulLine.get(i));
+		line += num + "#";
+		for (int i = 0; i < usefulLine.size(); i++) {
+			// System.out.println(i + ":" + usefulLine.get(i));
+
+			if (i <= 2) {
+				if (usefulLine.get(i).split(":").length > 1) {
+					line = line
+							+ usefulLine.get(i).split(":")[1].replaceAll(" ",
+									"") + "#";
+				} else {
+
+					line = line + "   #";
+				}
+
+			} else {
+				if (usefulLine.get(i).contains(":"))
+					continue;
+				line = line + usefulLine.get(i).replaceAll("[ ]{2,}", "") + "#";
+			}
+
 		}
-		
-		
-		
-		
-		return null;
+		// System.out.println(line);
+		return line;
 	}
 
 	@Override
 	public String getNextUrl(String url, int num) {
-		return url.replaceAll((num-1)+"", num+"");
+		if (num == beginwith)
+			return url;
+		return url.replaceAll(beginwith + "", num + "");
 	}
 
 }
@@ -263,7 +281,6 @@ class SourceforgeSpider extends WebSpider {
 
 	}
 
-	
 	@Override
 	public String getNextUrl(String url, int num) {
 		return url + num;
